@@ -1,0 +1,14 @@
+# Keep the build context small and never leak secrets into the image.
+.git
+.gitignore
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.session
+*.session-journal
+downloads/
+*.log
+Need.md
+README.md

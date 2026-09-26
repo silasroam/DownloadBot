@@ -1,0 +1,40 @@
+# Render Blueprint (Infrastructure as Code) for the Telegram media downloader.
+#
+# Usage: Render Dashboard -> New -> Blueprint -> select this repository.
+# Render will build ./Dockerfile, inject PORT and RENDER_EXTERNAL_URL, and ask
+# you for the three secret values marked with `sync: false`.
+services:
+  - type: web
+    name: tg-media-downloader
+    runtime: docker            # (older accounts may need `env: docker`)
+    plan: free
+    region: frankfurt          # free regions: oregon, ohio, virginia, frankfurt, singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Secrets: Render prompts for these during Blueprint creation.
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+
+      - key: SESSION_NAME
+        value: downloader_bot
+      # Free instances have 512 MB RAM and an ephemeral disk: lower this if
+      # large merges get killed (e.g. "1000").
+      - key: MAX_FILE_SIZE_MB
+        value: "2000"
+      - key: DOWNLOAD_DIR
+        value: /app/downloads
+      # Inbound ping every 13 min so the free instance does not spin down
+      # (Render's own value is 1..14 minutes after clamping).
+      - key: SELF_PING_INTERVAL_MINUTES
+        value: "13"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # PORT and RENDER_EXTERNAL_URL are injected by Render automatically and
+      # must NOT be declared here.

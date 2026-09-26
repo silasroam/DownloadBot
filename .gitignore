@@ -1,0 +1,19 @@
+# Environment / secrets
+.env
+
+# Pyrogram session files
+*.session
+*.session-journal
+
+# Temporary downloads (keep the folder itself)
+downloads/*
+!downloads/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs
+*.log
