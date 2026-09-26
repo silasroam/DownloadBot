@@ -351,6 +351,29 @@ def _log_download_failure(url: str, exc: BaseException, detail: str) -> None:
     )
 
 
+#: Where a Netscape ``cookies.txt`` is looked up when ``COOKIES_FILE`` is unset,
+#: in order of precedence.  Render mounts Secret Files at ``/etc/secrets/``; the
+#: second entry covers a file placed next to the bot (the container's WORKDIR).
+_COOKIES_FILE_CANDIDATES: tuple[Path, ...] = (
+    Path("/etc/secrets/cookies.txt"),
+    Path("cookies.txt"),
+)
+
+
+def _find_cookies_file() -> Optional[str]:
+    """Return the ``cookies.txt`` yt-dlp should use, or ``None`` when absent.
+
+    An explicit ``COOKIES_FILE`` environment variable always wins; otherwise the
+    Render Secret File and finally a local ``cookies.txt`` are tried.
+    """
+    if config.COOKIES_FILE:
+        return config.COOKIES_FILE
+    for candidate in _COOKIES_FILE_CANDIDATES:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
 def _build_options(
     mode: str,
     output_dir: Path,
@@ -399,11 +422,13 @@ def _build_options(
 
     if config.FFMPEG_PATH:
         options["ffmpeg_location"] = config.FFMPEG_PATH
-    if config.HTTP_PROXY:
-        options["proxy"] = config.HTTP_PROXY
-    if config.COOKIES_FILE:
-        # cookies.txt unlocks age/region/bot-checked videos.
-        options["cookiefile"] = config.COOKIES_FILE
+
+    # cookies.txt unlocks age/region/bot-checked videos (YouTube's "Sign in to
+    # confirm you're not a bot").  Render Secret Files land in /etc/secrets/,
+    # with a cookies.txt next to the bot as the local fallback.
+    cookies_file = _find_cookies_file()
+    if cookies_file is not None:
+        options["cookiefile"] = cookies_file
 
     if mode == MODE_AUDIO:
         options["format"] = AUDIO_FORMAT

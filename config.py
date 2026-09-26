@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
 
 from dotenv import load_dotenv
 
@@ -98,7 +97,6 @@ DOWNLOAD_DIR: Path = _download_dir if _download_dir.is_absolute() else BASE_DIR 
 # --- Optional tuning ----------------------------------------------------------
 WORKERS: int = _get_int("WORKERS", 4)
 MAX_CONCURRENT_TRANSMISSIONS: int = _get_int("MAX_CONCURRENT_TRANSMISSIONS", 4)
-HTTP_PROXY: str = _get_str("HTTP_PROXY")
 FFMPEG_PATH: str = _get_str("FFMPEG_PATH")
 
 # --- yt-dlp networking --------------------------------------------------------
@@ -150,29 +148,3 @@ def ensure_download_dir() -> Path:
     """Create the temporary download directory if needed and return it."""
     DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
     return DOWNLOAD_DIR
-
-
-def get_proxy() -> dict | None:
-    """Parse ``HTTP_PROXY`` into the dict format expected by Pyrogram.
-
-    Accepts ``http://user:pass@host:port`` and ``socks5://host:port`` style URLs.
-    Returns ``None`` when no proxy is configured.
-    """
-    if not HTTP_PROXY:
-        return None
-
-    parsed = urlsplit(HTTP_PROXY if "://" in HTTP_PROXY else f"http://{HTTP_PROXY}")
-    if not parsed.hostname:
-        return None
-
-    proxy: dict[str, object] = {
-        "scheme": (parsed.scheme or "http").lower(),
-        "hostname": parsed.hostname,
-        "port": parsed.port or 8080,
-    }
-    if parsed.username:
-        proxy["username"] = unquote(parsed.username)
-    if parsed.password:
-        proxy["password"] = unquote(parsed.password)
-
-    return proxy

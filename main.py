@@ -613,7 +613,6 @@ def create_client() -> Client:
         workdir=str(config.BASE_DIR),
         workers=config.WORKERS,
         max_concurrent_transmissions=config.MAX_CONCURRENT_TRANSMISSIONS,
-        proxy=config.get_proxy(),
     )
 
     handlers = [

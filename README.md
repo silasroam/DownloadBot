@@ -63,11 +63,14 @@ docker run --rm -p 10000:10000 --env-file .env tg-media-downloader
 | `RENDER_EXTERNAL_URL` | – | injected by Render; enables the self-ping keep-alive |
 | `SELF_PING_INTERVAL_MINUTES` | `13` | ping cadence, clamped to 1–14 minutes |
 | `FFMPEG_PATH` | – | explicit ffmpeg binary (e.g. `/usr/bin/ffmpeg`) |
-| `HTTP_PROXY` | – | `http://user:pass@ip:port` or `socks5://ip:port` |
+| `COOKIES_FILE` | auto | explicit Netscape `cookies.txt`; otherwise auto-detected at `/etc/secrets/cookies.txt` (Render Secret Files) or `./cookies.txt` |
 | `WORKERS`, `MAX_CONCURRENT_TRANSMISSIONS` | `4` | Pyrogram tuning |
 
 `FFMPEG_PATH` is optional: ffmpeg is on `PATH` in the Docker image and in a normal
 Arch/Debian install, and yt-dlp finds it by itself.
+
+`COOKIES_FILE` is optional too: on Render, add a Secret File named `cookies.txt`
+and it is picked up automatically from `/etc/secrets/cookies.txt`.
 
 ## Deploy on Render.com
 

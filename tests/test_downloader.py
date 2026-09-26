@@ -125,3 +125,53 @@ def test_is_valid_audio_format():
     assert downloader.is_valid_audio_format("FLAC") is True
     assert downloader.is_valid_audio_format("ogg") is False
     assert downloader.is_valid_audio_format(None) is False
+
+
+# ---------------------------------------------------------------------------
+# Cookies: automatic lookup (Render Secret Files, local fallback) and no proxy
+# ---------------------------------------------------------------------------
+def test_find_cookies_file_prefers_explicit_config(monkeypatch, tmp_path):
+    explicit = tmp_path / "explicit.txt"
+    explicit.write_text("# Netscape HTTP Cookie File\n")
+    monkeypatch.setattr(config, "COOKIES_FILE", str(explicit))
+    assert downloader._find_cookies_file() == str(explicit)
+
+
+def test_find_cookies_file_uses_first_existing_candidate(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    secret = tmp_path / "cookies.txt"
+    secret.write_text("# Netscape HTTP Cookie File\n")
+    monkeypatch.setattr(
+        downloader,
+        "_COOKIES_FILE_CANDIDATES",
+        (tmp_path / "missing.txt", secret),
+    )
+    assert downloader._find_cookies_file() == str(secret)
+
+
+def test_find_cookies_file_returns_none_when_absent(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (tmp_path / "missing.txt",))
+    assert downloader._find_cookies_file() is None
+
+
+def test_build_options_sets_cookiefile_and_never_proxy(monkeypatch, tmp_path):
+    secret = tmp_path / "cookies.txt"
+    secret.write_text("# Netscape HTTP Cookie File\n")
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (secret,))
+
+    opts = downloader._build_options(downloader.MODE_VIDEO_AUDIO, tmp_path, {})
+
+    assert opts["cookiefile"] == str(secret)
+    assert "proxy" not in opts
+
+
+def test_build_options_omits_cookiefile_when_absent(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (tmp_path / "missing.txt",))
+
+    opts = downloader._build_options(downloader.MODE_VIDEO_AUDIO, tmp_path, {})
+
+    assert "cookiefile" not in opts
+    assert "proxy" not in opts
