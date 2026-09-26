@@ -155,16 +155,50 @@ def test_find_cookies_file_returns_none_when_absent(monkeypatch, tmp_path):
     assert downloader._find_cookies_file() is None
 
 
-def test_build_options_sets_cookiefile_and_never_proxy(monkeypatch, tmp_path):
+def test_build_options_copies_cookiefile_into_writable_job_dir(monkeypatch, tmp_path):
+    secret = tmp_path / "cookies.txt"
+    secret.write_text("# Netscape HTTP Cookie File\n")
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (secret,))
+    job_dir = tmp_path / "job"
+    job_dir.mkdir()
+
+    opts = downloader._build_options(downloader.MODE_VIDEO_AUDIO, job_dir, {})
+
+    cookie_copy = Path(opts["cookiefile"])
+    assert cookie_copy != secret
+    assert cookie_copy.is_relative_to(job_dir)
+    assert cookie_copy.read_text() == secret.read_text()
+    # yt-dlp dumps the cookie jar back into this file on close: it must be writable.
+    cookie_copy.write_text("updated\n")
+    assert "proxy" not in opts
+
+
+def test_get_usable_cookiefile_copy_is_unique_per_call(monkeypatch, tmp_path):
     secret = tmp_path / "cookies.txt"
     secret.write_text("# Netscape HTTP Cookie File\n")
     monkeypatch.setattr(config, "COOKIES_FILE", "")
     monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (secret,))
 
-    opts = downloader._build_options(downloader.MODE_VIDEO_AUDIO, tmp_path, {})
+    first = downloader._get_usable_cookiefile(tmp_path)
+    second = downloader._get_usable_cookiefile(tmp_path)
 
-    assert opts["cookiefile"] == str(secret)
-    assert "proxy" not in opts
+    assert first is not None and second is not None
+    assert first != second
+
+
+def test_get_usable_cookiefile_falls_back_when_copy_fails(monkeypatch, tmp_path):
+    secret = tmp_path / "cookies.txt"
+    secret.write_text("# Netscape HTTP Cookie File\n")
+    monkeypatch.setattr(config, "COOKIES_FILE", "")
+    monkeypatch.setattr(downloader, "_COOKIES_FILE_CANDIDATES", (secret,))
+
+    def _boom(*args, **kwargs):
+        raise OSError("read-only file system")
+
+    monkeypatch.setattr(downloader.shutil, "copyfile", _boom)
+
+    assert downloader._get_usable_cookiefile(tmp_path) == str(secret)
 
 
 def test_build_options_omits_cookiefile_when_absent(monkeypatch, tmp_path):

@@ -70,7 +70,9 @@ docker run --rm -p 10000:10000 --env-file .env tg-media-downloader
 Arch/Debian install, and yt-dlp finds it by itself.
 
 `COOKIES_FILE` is optional too: on Render, add a Secret File named `cookies.txt`
-and it is picked up automatically from `/etc/secrets/cookies.txt`.
+and it is picked up automatically from `/etc/secrets/cookies.txt`. Because that
+mount is read-only and yt-dlp writes its cookie jar back when it closes, the bot
+copies the file into the per-job temp folder before downloading.
 
 ## Deploy on Render.com
 

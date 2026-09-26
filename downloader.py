@@ -12,6 +12,8 @@ import contextlib
 import functools
 import logging
 import re
+import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping, Optional, Union
@@ -374,6 +376,35 @@ def _find_cookies_file() -> Optional[str]:
     return None
 
 
+def _get_usable_cookiefile(output_dir: Path) -> Optional[str]:
+    """Return a *writable* copy of the cookies file for yt-dlp, or ``None``.
+
+    yt-dlp dumps its cookie jar back into ``cookiefile`` when the ``YoutubeDL``
+    instance is closed, so a read-only path (Render mounts Secret Files
+    read-only at ``/etc/secrets/``) makes every download fail with
+    ``OSError: [Errno 30] Read-only file system``.  The file is therefore copied
+    into a fresh, per-job subdirectory of ``output_dir`` - which is removed with
+    the rest of the job - and that copy is handed to yt-dlp.  A unique directory
+    per call keeps concurrent downloads from clobbering each other's cookies.
+    """
+    cookie_path = _find_cookies_file()
+    if not cookie_path:
+        return None
+
+    try:
+        cookie_dir = Path(tempfile.mkdtemp(prefix="cookies_", dir=str(output_dir)))
+        writable_path = cookie_dir / "cookies.txt"
+        shutil.copyfile(cookie_path, writable_path)
+        return str(writable_path)
+    except Exception:  # never let the cookie copy break the download
+        log.warning(
+            "Could not copy cookies file %s to a writable location, using it as-is",
+            cookie_path,
+            exc_info=True,
+        )
+        return cookie_path
+
+
 def _build_options(
     mode: str,
     output_dir: Path,
@@ -424,9 +455,9 @@ def _build_options(
         options["ffmpeg_location"] = config.FFMPEG_PATH
 
     # cookies.txt unlocks age/region/bot-checked videos (YouTube's "Sign in to
-    # confirm you're not a bot").  Render Secret Files land in /etc/secrets/,
-    # with a cookies.txt next to the bot as the local fallback.
-    cookies_file = _find_cookies_file()
+    # confirm you're not a bot").  Render Secret Files land in /etc/secrets/ and
+    # are read-only, so a writable copy is placed in the job folder first.
+    cookies_file = _get_usable_cookiefile(output_dir)
     if cookies_file is not None:
         options["cookiefile"] = cookies_file
 
