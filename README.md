@@ -23,6 +23,9 @@ and, when `RENDER_EXTERNAL_URL` is available, a background task pings its own
 ## Requirements
 
 - Docker (recommended) **or** Python 3.10+ with `ffmpeg` installed
+- [Deno](https://deno.com/) 2.0+ on `PATH`: yt-dlp uses it as the JavaScript
+  runtime for YouTube since version 2025.11.12 (the Docker image already ships
+  it; for local runs install it yourself, e.g. `curl -fsSL https://deno.land/install.sh | sh`)
 - Telegram `API_ID` / `API_HASH` (<https://my.telegram.org/apps>) and a bot token
   from [@BotFather](https://t.me/BotFather)
 

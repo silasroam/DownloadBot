@@ -20,6 +20,14 @@ COPY requirements.txt .
 RUN pip wheel --wheel-dir /wheels -r requirements.txt
 
 # ---------------------------------------------------------------------------
+# JS runtime - required for YouTube since yt-dlp 2025.11.12
+# yt-dlp invokes Deno to solve YouTube's player/nsig challenges; without it
+# format availability is limited and downloads increasingly fail.  The bin
+# image is scratch-based, only the single static binary is copied out of it.
+# ---------------------------------------------------------------------------
+FROM denoland/deno:bin-2.9.7 AS deno
+
+# ---------------------------------------------------------------------------
 # Stage 2 - runtime
 # Minimal image: system ffmpeg (audio extraction / mp4 merge), ca-certificates
 # (yt-dlp over TLS), the prebuilt wheels and the bot sources.  Runs as uid 10001.
@@ -38,6 +46,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates
+
+# Deno for yt-dlp's YouTube challenge solver (see the "deno" stage above).
+# Deno is the only JS runtime yt-dlp enables by default, so being on PATH is enough.
+COPY --from=deno /deno /usr/local/bin/deno
 
 # Never run the bot as root (Render free tier friendly).
 RUN groupadd --gid 10001 app \
