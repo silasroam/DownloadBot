@@ -50,7 +50,7 @@ COPY requirements.txt ./
 RUN pip install --no-index --find-links=/wheels -r requirements.txt \
     && rm -rf /wheels
 
-COPY --chown=app:app main.py config.py downloader.py webserver.py strings.py ./
+COPY --chown=app:app main.py config.py downloader.py webserver.py strings.py keyboards.py database.py pyrocompat.py ./
 RUN mkdir -p /app/downloads && chown -R app:app /app
 
 USER app

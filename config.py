@@ -30,6 +30,12 @@ DEFAULT_MAX_FILE_SIZE_MB = 2000
 DEFAULT_PORT = 10000
 #: Self-ping cadence default (Render free tier sleeps after ~15 min idle).
 DEFAULT_SELF_PING_INTERVAL_MINUTES = 13
+#: Browser-like User-Agent handed to yt-dlp.  Several extractors (YouTube,
+#: TikTok, VK) answer HTTP 403 / "not a bot" challenges to the default agent.
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+)
 
 
 class ConfigError(RuntimeError):
@@ -94,6 +100,13 @@ WORKERS: int = _get_int("WORKERS", 4)
 MAX_CONCURRENT_TRANSMISSIONS: int = _get_int("MAX_CONCURRENT_TRANSMISSIONS", 4)
 HTTP_PROXY: str = _get_str("HTTP_PROXY")
 FFMPEG_PATH: str = _get_str("FFMPEG_PATH")
+
+# --- yt-dlp networking --------------------------------------------------------
+#: Overrides the User-Agent yt-dlp sends with its requests.
+USER_AGENT: str = _get_str("USER_AGENT", DEFAULT_USER_AGENT) or DEFAULT_USER_AGENT
+#: Optional Netscape ``cookies.txt`` file.  Required for age-restricted,
+#: region-locked or bot-checked videos (e.g. YouTube "Sign in to confirm").
+COOKIES_FILE: str = _get_str("COOKIES_FILE")
 
 # --- Web service (Render.com) -------------------------------------------------
 # Render assigns the public port through PORT (10000 by default) and kills

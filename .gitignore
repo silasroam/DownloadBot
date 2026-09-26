@@ -15,5 +15,9 @@ __pycache__/
 .venv/
 venv/
 
+# aiosqlite numbering database + pytest cache
+*.db
+.pytest_cache/
+
 # Logs
 *.log

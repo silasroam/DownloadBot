@@ -77,6 +77,32 @@ class UI:
     NO_LINK = "🔗 Не вижу ссылку в сообщении.\nПришлите ссылку вида https://example.com/video"
     ALERT_BUSY = "⏳ Дождитесь завершения текущей загрузки."
 
+    # --------------------------------------------------------------------------
+    # Двухшаговое инлайн-меню: шаг 1 — категория, шаг 2 — качество/формат.
+    # --------------------------------------------------------------------------
+    # Шаг 1: три главные кнопки выбора категории.
+    BUTTON_CATEGORY_VIDEO = "🎬 Видео"
+    BUTTON_CATEGORY_AUDIO = "🎵 Аудио"
+    BUTTON_CATEGORY_VIDEO_AUDIO = "🎥 Видео со звуком"
+    #: Полные названия категорий — используются в заголовке сообщения шага 2.
+    CATEGORY_VIDEO_TITLE = "🎬 Видео без звука"
+    CATEGORY_AUDIO_TITLE = "🎵 Только звук"
+    CATEGORY_VIDEO_AUDIO_TITLE = "🎥 Видео со звуком"
+    #: Кнопка возврата со шага 2 на шаг 1.
+    BUTTON_BACK = "⬅️ Назад"
+
+    # Шаг 2: подписи под-кнопок качества (видео) и аудиоформатов.
+    QUALITY_BUTTON_LABELS = {1080: "1080p", 720: "720p", 480: "480p", 360: "360p"}
+    AUDIO_BUTTON_LABELS = {"mp3": "MP3", "m4a": "M4A", "aac": "AAC", "flac": "FLAC"}
+
+    @staticmethod
+    def choose_category(url: str) -> str:
+        return f"🔗 {url}\n\nШаг 1/2. Выберите категорию загрузки:"
+
+    @staticmethod
+    def choose_quality(title: str) -> str:
+        return f"{title}\n\nШаг 2/2. Выберите качество или формат:"
+
     @staticmethod
     def choose_format(url: str) -> str:
         return f"🔗 {url}\n\nВыберите формат загрузки:"
@@ -123,6 +149,7 @@ class LogMessages:
 
     # --- Внешняя загрузка (yt-dlp) ---
     LINK_FAIL = "⚠️ Ошибка скачивания медиа по URL: {url} ({error_type}: {error})"
+    LINK_FAIL_DETAIL = "⚠️ Полный текст ошибки yt-dlp для {url}:\n{error}"
     YTDLP_MISSING = "⚠️ Пакет yt-dlp не найден — загрузка по ссылкам недоступна"
 
     # --------------------------------------------------------------------------
